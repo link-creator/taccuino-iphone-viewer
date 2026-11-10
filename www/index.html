@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="it"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=5,user-scalable=yes">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="theme-color" content="#12b0ff">
+<link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="icons/icon-180.png">
+<title>Taccuino Viewer</title>
+<style>
+:root{--bg:#f2f6fa;--card:#fff;--tx:#14202b;--mu:#6b7b8a;--ac:#12b0ff;--bd:#dfe7ee}
+@media(prefers-color-scheme:dark){:root{--bg:#0d141b;--card:#18222c;--tx:#eaf1f7;--mu:#8fa1b2;--bd:#26323e}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--tx);font:16px -apple-system,system-ui,sans-serif}
+.scr{position:fixed;inset:0;display:flex;flex-direction:column;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom);animation:in .3s ease}
+@keyframes in{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.hide{display:none!important}
+.login{align-items:center;justify-content:center;text-align:center;padding:24px;background:linear-gradient(160deg,#12b0ff,#0a6fd8);color:#fff}
+.login h1{margin:8px 0 4px;font-size:28px}.login p{margin:0 0 22px;opacity:.9}
+.logo{width:84px;height:84px;border-radius:20px;box-shadow:0 8px 24px #0004}
+.kin{width:100%;max-width:340px;font:600 20px ui-monospace,Menlo,monospace;letter-spacing:1px;text-align:center;padding:14px;border-radius:14px;border:0;outline:0;text-transform:uppercase;color:#14202b}
+.btn{margin-top:14px;width:100%;max-width:340px;padding:14px;border:0;border-radius:14px;background:#fff;color:#0a6fd8;font:700 17px inherit;cursor:pointer}
+.btn:active{transform:scale(.97)}.btn[disabled]{opacity:.6}
+.err{min-height:22px;margin-top:12px;font-weight:600;color:#ffe3e3}
+.top{display:flex;align-items:center;gap:10px;padding:12px 16px;background:var(--card);border-bottom:1px solid var(--bd)}
+.top h2{flex:1;margin:0;font-size:19px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.badge{font-size:11px;font-weight:700;padding:3px 8px;border-radius:99px;background:var(--ac);color:#fff}
+.ib{border:0;background:none;color:var(--ac);font-size:15px;font-weight:600;padding:6px 4px}
+.sr{margin:10px 16px 0;padding:11px 14px;border-radius:12px;border:1px solid var(--bd);background:var(--card);color:var(--tx);font-size:16px;outline:0}
+.chips{display:flex;gap:8px;overflow-x:auto;padding:10px 16px 4px;scrollbar-width:none}.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;padding:7px 14px;border-radius:99px;background:var(--card);border:1px solid var(--bd);font-weight:600;font-size:14px}
+.chip.on{background:var(--ac);border-color:var(--ac);color:#fff}
+.list{flex:1;overflow:auto;padding:10px 16px 24px}
+.nt{display:flex;align-items:center;gap:12px;padding:14px;margin-bottom:10px;border-radius:14px;background:var(--card);border:1px solid var(--bd);animation:in .3s ease both}
+.nt:active{transform:scale(.98)}
+.nt .ic{width:40px;height:52px;border-radius:6px;background:linear-gradient(#fff,#e9f4fb);border:1px solid var(--bd);flex:none}
+.nt b{display:block}.nt small{color:var(--mu)}
+.emp{text-align:center;color:var(--mu);padding:48px 24px;line-height:1.5}
+.view{background:#2a3138;color:#fff}
+.view .top{background:#1d2329;border-color:#0004;color:#fff}
+.pages{flex:1;overflow:auto;-webkit-overflow-scrolling:touch;padding:10px 0 30px;touch-action:pan-x pan-y pinch-zoom}
+.pg{width:calc(100% - 16px);margin:0 8px 10px;aspect-ratio:1000/1414;background:#fff;border-radius:4px;display:block;box-shadow:0 2px 10px #0006;object-fit:contain}
+.pgw{position:relative;margin:0 8px 10px}.pgw .pg{margin:0;width:100%}
+.pgn{position:absolute;right:8px;bottom:6px;font-size:11px;color:#667;background:#fffc;padding:1px 7px;border-radius:9px}
+.ld{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#889}
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));transform:translateX(-50%);background:#000c;color:#fff;padding:10px 16px;border-radius:12px;font-size:14px;z-index:9}
+</style></head><body>
+<div class="scr login hide" id="login">
+ <img class="logo" src="icons/icon-192.png" alt="">
+ <h1 id="lt"></h1><p id="ld"></p>
+ <input class="kin" id="kin" placeholder="XXXX-XXXX-XXXX-XXXX" maxlength="19" autocomplete="off" autocapitalize="characters" spellcheck="false">
+ <button class="btn" id="kgo"></button><div class="err" id="ker"></div>
+</div>
+<div class="scr hide" id="home">
+ <div class="top"><h2 id="ht"></h2><span class="badge" id="hb"></span><button class="ib" id="hr"></button><button class="ib" id="ho"></button></div>
+ <input class="sr" id="sq" type="search">
+ <div class="chips" id="chips"></div>
+ <div class="list" id="list"></div>
+</div>
+<div class="scr view hide" id="view">
+ <div class="top"><button class="ib" id="vb" style="color:#7fd4ff"></button><h2 id="vt"></h2><span id="vn" style="opacity:.7;font-size:13px"></span></div>
+ <div class="pages" id="pages"></div>
+</div>
+<div class="toast hide" id="toast"></div>
+<script src="keys.js"></script><script src="config.js"></script>
+<script>
+const $=id=>document.getElementById(id);
+const LG={it:{lt:'Taccuino Viewer',ld:'Leggi i tuoi appunti di Taccuino. Inserisci il codice di attivazione.',go:'Accedi',bad:'Codice non valido. Controlla di averlo scritto bene.',net:'Connessione assente o server non raggiungibile. Riprova.',nocode:'Questo codice non \u00e8 ancora stato attivato su un iPad.',all:'Tutti',noc:'Nessun appunto',nod:'Apri Taccuino sull\u2019iPad e premi \u201cSincronizza con iPhone\u201d (ingranaggio) per vedere qui i tuoi appunti.',ref:'Aggiorna',out:'Esci',srch:'Cerca',pg:'pagine',pg1:'pagina',back:'\u2039 Indietro',ld2:'Carico\u2026',off:'Offline: mostro i dati salvati.',outq:'Uscire e togliere il codice da questo iPhone?',upd:'Aggiornato',nof:'Senza cartella',ti:'I miei appunti'},
+en:{lt:'Taccuino Viewer',ld:'Read your Taccuino notes. Enter your activation code.',go:'Sign in',bad:'Invalid code. Check that you typed it correctly.',net:'No connection or server unreachable. Try again.',nocode:'This code has not been activated on an iPad yet.',all:'All',noc:'No notes',nod:'Open Taccuino on your iPad and tap \u201cSync with iPhone\u201d (gear) to see your notes here.',ref:'Refresh',out:'Sign out',srch:'Search',pg:'pages',pg1:'page',back:'\u2039 Back',ld2:'Loading\u2026',off:'Offline: showing saved data.',outq:'Sign out and remove the code from this iPhone?',upd:'Updated',nof:'No folder',ti:'My notes'},
+es:{lt:'Taccuino Viewer',ld:'Lee tus apuntes de Taccuino. Introduce tu c\u00f3digo de activaci\u00f3n.',go:'Entrar',bad:'C\u00f3digo no v\u00e1lido. Comprueba que lo has escrito bien.',net:'Sin conexi\u00f3n o servidor no disponible. Reint\u00e9ntalo.',nocode:'Este c\u00f3digo a\u00fan no se ha activado en un iPad.',all:'Todos',noc:'Sin apuntes',nod:'Abre Taccuino en el iPad y pulsa \u201cSincronizar con iPhone\u201d (engranaje) para ver aqu\u00ed tus apuntes.',ref:'Actualizar',out:'Salir',srch:'Buscar',pg:'p\u00e1ginas',pg1:'p\u00e1gina',back:'\u2039 Atr\u00e1s',ld2:'Cargando\u2026',off:'Sin conexi\u00f3n: muestro datos guardados.',outq:'\u00bfSalir y quitar el c\u00f3digo de este iPhone?',upd:'Actualizado',nof:'Sin carpeta',ti:'Mis apuntes'}};
+const T=LG[(navigator.language||'it').slice(0,2)]||LG.it;
+const SK=(()=>{const k=[];let n=2;while(k.length<64){let p=true;for(let d=2;d*d<=n;d++)if(n%d===0){p=false;break}if(p)k.push(Math.floor((Math.cbrt(n)%1)*4294967296));n++}return k})();
+const SH=(()=>{const k=[];let n=2;while(k.length<8){let p=true;for(let d=2;d*d<=n;d++)if(n%d===0){p=false;break}if(p)k.push(Math.floor((Math.sqrt(n)%1)*4294967296));n++}return k})();
+function sha256(str){const by=new TextEncoder().encode(str),l=by.length,n=((l+9+63)>>6)<<6,w=new Uint8Array(n);w.set(by);w[l]=128;const dv=new DataView(w.buffer);dv.setUint32(n-4,(l*8)>>>0);dv.setUint32(n-8,Math.floor(l*8/4294967296));
+ let H=SH.slice();const X=new Uint32Array(64),rr=(x,r)=>(x>>>r)|(x<<(32-r));
+ for(let o=0;o<n;o+=64){for(let t=0;t<16;t++)X[t]=dv.getUint32(o+t*4);
+  for(let t=16;t<64;t++){const s0=rr(X[t-15],7)^rr(X[t-15],18)^(X[t-15]>>>3),s1=rr(X[t-2],17)^rr(X[t-2],19)^(X[t-2]>>>10);X[t]=(X[t-16]+s0+X[t-7]+s1)>>>0}
+  let[a,b,c,d,e,f,g,h]=H;
+  for(let t=0;t<64;t++){const S1=rr(e,6)^rr(e,11)^rr(e,25),ch=(e&f)^(~e&g),t1=(h+S1+ch+SK[t]+X[t])>>>0,S0=rr(a,2)^rr(a,13)^rr(a,22),mj=(a&b)^(a&c)^(b&c),t2=(S0+mj)>>>0;h=g;g=f;f=e;e=(d+t1)>>>0;d=c;c=b;b=a;a=(t1+t2)>>>0}
+  H=[H[0]+a,H[1]+b,H[2]+c,H[3]+d,H[4]+e,H[5]+f,H[6]+g,H[7]+h].map(x=>x>>>0)}
+ return H.map(x=>x.toString(16).padStart(8,'0')).join('')}
+function keyCheck(t){if(t.length!==16||!window.TK)return null;const h=sha256('taccuino-keys-v1:'+t).slice(0,20);
+ if(TK.b.includes(h))return{ed:'business',h};if(TK.p.includes(h))return{ed:'personal',h};return null}
+const ls={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}},del(k){try{localStorage.removeItem(k)}catch(e){}}};
+let ME=null,IDX={nbs:[],notes:[]},folder=null;
+const show=id=>{['login','home','view'].forEach(x=>$(x).classList.toggle('hide',x!==id))};
+const toast=m=>{const t=$('toast');t.textContent=m;t.classList.remove('hide');clearTimeout(toast.t);toast.t=setTimeout(()=>t.classList.add('hide'),2600)};
+const api=async q=>{const r=await fetch(TK_URL+(TK_URL.includes('?')?'&':'?')+q);return r.json()};
+/* cache pagine in IndexedDB */
+let DB=null;const idb=()=>DB||(DB=new Promise(res=>{try{const r=indexedDB.open('tview',1);r.onupgradeneeded=()=>r.result.createObjectStore('p');r.onsuccess=()=>res(r.result);r.onerror=()=>res(null)}catch(e){res(null)}}));
+const cget=async k=>{const d=await idb();if(!d)return null;return new Promise(r=>{const q=d.transaction('p').objectStore('p').get(k);q.onsuccess=()=>r(q.result||null);q.onerror=()=>r(null)})};
+const cput=async(k,v)=>{const d=await idb();if(!d)return;try{d.transaction('p','readwrite').objectStore('p').put(v,k)}catch(e){}};
+function fmt(t){try{return new Date(t).toLocaleDateString(navigator.language,{day:'numeric',month:'short',year:'numeric'})}catch(e){return''}}
+function tr(){$('lt').textContent=T.lt;$('ld').textContent=T.ld;$('kgo').textContent=T.go;$('ht').textContent=T.ti;$('hr').textContent=T.ref;$('ho').textContent=T.out;$('sq').placeholder=T.srch;$('vb').textContent=T.back}
+async function login(){
+ const v=$('kin').value.toUpperCase().replace(/[^A-Z0-9]/g,''),r=keyCheck(v),er=$('ker');er.textContent='';
+ if(!r){er.textContent=T.bad;return}
+ $('kgo').disabled=true;
+ try{const j=await api('action=list&h='+r.h);
+  if(!j||!j.ok){er.textContent=j&&j.err==='nocode'?T.nocode:T.bad;return}
+  ls.set('tv.h',r.h);ls.set('tv.ed',r.ed);ME={h:r.h,ed:r.ed};setIdx(j.idx);enter()}
+ catch(e){er.textContent=T.net}finally{$('kgo').disabled=false}}
+function setIdx(i){IDX=i&&i.notes?i:{nbs:[],notes:[]};ls.set('tv.idx',JSON.stringify(IDX))}
+function enter(){$('hb').textContent=ME.ed==='business'?'Business':'Personal';show('home');draw()}
+function draw(){
+ const q=$('sq').value.trim().toLowerCase(),ch=$('chips');ch.innerHTML='';
+ const mk=(id,t)=>{const b=document.createElement('div');b.className='chip'+(folder===id?' on':'');b.textContent=t;b.onclick=()=>{folder=id;draw()};ch.append(b)};
+ mk(null,T.all);IDX.nbs.forEach(n=>mk(n.id,'\ud83d\udcc1 '+n.name));
+ ch.classList.toggle('hide',!IDX.nbs.length);
+ const l=$('list');l.innerHTML='';
+ const ns=IDX.notes.filter(n=>(folder===null||n.nb===folder)&&n.title.toLowerCase().includes(q)).sort((a,b)=>b.t-a.t);
+ if(!ns.length){l.innerHTML='<div class="emp"><b>'+T.noc+'</b><br>'+(IDX.notes.length?'':T.nod)+'</div>';return}
+ ns.forEach((n,k)=>{const d=document.createElement('div');d.className='nt';d.style.animationDelay=Math.min(k,8)*30+'ms';
+  const nb=IDX.nbs.find(x=>x.id===n.nb);
+  d.innerHTML='<div class="ic"></div><div><b></b><small></small></div>';d.querySelector('b').textContent=n.title;
+  d.querySelector('small').textContent=(nb?nb.name+' \u00b7 ':'')+n.n+' '+(n.n===1?T.pg1:T.pg)+' \u00b7 '+fmt(n.t);
+  d.onclick=()=>openNote(n);l.append(d)})}
+async function refresh(quiet){
+ try{const j=await api('action=list&h='+ME.h);if(!j||!j.ok)throw 0;setIdx(j.idx);draw();if(!quiet)toast(T.upd)}
+ catch(e){toast(T.off)}}
+async function getPage(n,i){
+ const k=n.id+'_'+i+'_'+n.sig,c=await cget(k);if(c)return c;
+ const j=await api('action=page&h='+ME.h+'&n='+n.id+'&i='+i);if(!j||!j.ok)throw 0;
+ const u='data:image/jpeg;base64,'+j.img;cput(k,u);return u}
+function openNote(n){
+ $('vt').textContent=n.title;$('vn').textContent=n.n+' '+(n.n===1?T.pg1:T.pg);
+ const P=$('pages');P.innerHTML='';P.scrollTop=0;
+ const io=new IntersectionObserver(es=>es.forEach(e=>{if(!e.isIntersecting)return;const w=e.target;io.unobserve(w);
+   getPage(n,+w.dataset.i).then(u=>{const im=new Image();im.className='pg';im.src=u;im.onload=()=>{w.querySelector('.ld').remove();w.insertBefore(im,w.firstChild)}}).catch(()=>{w.querySelector('.ld').textContent='\u26a0\ufe0f'})}),{root:P,rootMargin:'600px'});
+ for(let i=0;i<n.n;i++){const w=document.createElement('div');w.className='pgw';w.dataset.i=i;w.style.aspectRatio='1000/1414';w.style.background='#fff';w.style.borderRadius='4px';
+  w.innerHTML='<div class="ld">'+T.ld2+'</div><div class="pgn">'+(i+1)+' / '+n.n+'</div>';P.append(w);io.observe(w)}
+ show('view')}
+$('vb').onclick=()=>show('home');$('hr').onclick=()=>refresh(false);$('sq').oninput=draw;
+$('ho').onclick=()=>{if(!confirm(T.outq))return;ls.del('tv.h');ls.del('tv.ed');ls.del('tv.idx');ME=null;$('kin').value='';show('login')};
+$('kin').oninput=e=>{const v=e.target.value.toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,16);e.target.value=v.replace(/(.{4})(?=.)/g,'$1-');$('ker').textContent=''};
+$('kin').onkeydown=e=>{if(e.key==='Enter')login()};$('kgo').onclick=login;
+tr();
+(function(){const h=ls.get('tv.h'),ed=ls.get('tv.ed');
+ if(h&&ed){ME={h,ed};try{setIdx(JSON.parse(ls.get('tv.idx')||'null'))}catch(e){}enter();refresh(true)}else show('login')})();
+if('serviceWorker'in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('sw.js').catch(()=>{});
+</script></body></html>
